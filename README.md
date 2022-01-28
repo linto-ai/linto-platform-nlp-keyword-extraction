@@ -28,7 +28,6 @@ docker build . -t linto-platform-disfluency:latest
 ```bash
 docker run --rm \
 -p HOST_SERVING_PORT:80 \
---env LANGUAGE=en_US \
 --env SERVICE_MODE=http \
 --env CONCURRENCY=10 \
 linto-platform-disfluency:latest
@@ -40,7 +39,6 @@ This will run a container providing an http API binded on the host HOST_SERVING_
 | Variables | Description | Example |
 |:-|:-|:-|
 | HOST_SERVING_PORT | Host serving port | 80 |
-| LANGUAGE | Language code as a BCP-47 code  | en-US, fr_FR, ... |
 | CONCURRENCY | Number of worker | 4 |
 
 ### Micro-service within LinTO-Platform stack
@@ -54,7 +52,6 @@ You need a message broker up and running at MY_SERVICE_BROKER.
 docker run --rm \
 --env SERVICES_BROKER=MY_SERVICE_BROKER \
 --env BROKER_PASS=MY_BROKER_PASS \
---env LANGUAGE=en_US \
 --env SERVICE_MODE=task \
 --env CONCURRENCY=10 \
 linto-platform-disfluency:dev
@@ -63,11 +60,8 @@ linto-platform-disfluency:dev
 **Parameters:**
 | Variables | Description | Example |
 |:-|:-|:-|
-| AM_PATH | Path to the acoustic model | /my/path/to/models/AM_fr-FR_v2.2.0 |
-| LM_PATH | Path to the language model | /my/path/to/models/AM_fr-FR_v2.2.0 |
 | SERVICES_BROKER | Service broker uri | redis://my_redis_broker:6379 |
 | BROKER_PASS | Service broker password (Leave empty if there is no password) | my_password |
-| LANGUAGE | Transcription language | en-US |
 | CONCURRENCY | Number of worker (1 worker = 1 cpu) | [ 1 -> numberOfCPU] |
 
 ## Usages
