@@ -29,7 +29,11 @@ paths:
       responses:
         200:
           description: Successfully transcribe the audio
-          content: {}
+          content: 
+            text/plain:
+                schema:
+                  type: string
+                  default: This is a transcription
         400:
           description: Request error
           content: {}
