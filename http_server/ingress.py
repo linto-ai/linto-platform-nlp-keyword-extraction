@@ -11,6 +11,8 @@ from serving import GunicornServing
 from confparser import createParser
 from swagger import setupSwaggerUI
 
+from keyword_extraction.utils import get_word_frequencies
+
 # IMPORT YOUR PROCESSING FUNCTION HERE
 
 app = Flask("__stt-standalone-worker__")
@@ -26,9 +28,9 @@ def healthcheck():
 def oas_docs():
     return "Not Implemented", 501
 
-@app.route('/disfluency', methods=['POST'])
-def transcribe():
-    logger.info('Disfluency request received')
+@app.route('/keyword_extraction', methods=['POST'])
+def extract_keywords():
+    logger.info('Keyword extraction request received')
 
     # get response content type
     logger.debug(request.headers.get('accept').lower())
@@ -38,17 +40,15 @@ def transcribe():
     # Retrieve request text
     try:
         input_text = request.form.get("text")
-        language = request.form.get("language")
     except Exception as e:
         return "Missing request parameter: {}".format(e)
 
     try:
-        pass 
-        # DO YOUR PROCESSING HERE
+        result = get_word_frequencies(text)
     except Exception as e:
         return "Failed to process text: {}".format(e), 500
 
-    return "result", 200
+    return result, 200
 
 # Rejected request handlers
 @app.errorhandler(405)

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ea
 
-echo "RUNNING STT"
+echo "RUNNING KEYWORD EXTRACTION"
 
 # Launch parameters, environement variables and dependencies check
 if [ -z "$SERVICE_MODE" ]
@@ -21,7 +21,7 @@ else
             return -1
         fi
         /usr/src/app/wait-for-it.sh $(echo $SERVICES_BROKER | cut -d'/' -f 3) --timeout=20 --strict -- echo " $SERVICES_BROKER (Service Broker) is up"
-        echo "RUNNING STT CELERY WORKER"
+        echo "RUNNING KEYWORD EXTRACTION CELERY WORKER"
         celery --app=celery_app.celeryapp worker -Ofair -n ${SERVICE_NAME}_worker@%h --queues=${SERVICE_NAME} -c ${CONCURRENCY}
     else
         echo "ERROR: Wrong serving command: $1"

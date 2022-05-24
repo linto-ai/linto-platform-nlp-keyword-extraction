@@ -1,19 +1,13 @@
 import os
-
-from stt import logger
-from stt.processing import model
+import requests
+import json
 from celery_app.celeryapp import celery
-from stt.processing.utils import load_wave
-from stt.processing.decoding import decode
 
-@celery.task(name="disfluency_task")
-def transcribe_task(text: str, language: str):
-    """ transcribe_task do a synchronous call to the transcribe worker API """
-    logger.info("Received transcription task")
-    # Load wave
-    
-    # INSERT PROCESSING HERE
-    
-    return "result"
+from keyword_extraction.utils import get_word_frequencies
 
-    
+
+@celery.task(name="keyword_extraction_task")
+def keyword_extraction_task(text: str):
+    """ return word frequencies """
+    word_frequencies = get_word_frequencies(text)
+    return word_frequencies

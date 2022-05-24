@@ -19,7 +19,7 @@ celery.conf.update(
 # Queues
 celery.conf.update(
     {'task_routes': {
-        'disfluency_task' : {'queue': "disfluency"},}
+        'keyword_extraction_task' : {'queue': "keyword_extraction"},}
     }
 )
 
