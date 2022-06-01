@@ -1,7 +1,6 @@
 import os
 from celery import Celery
-
-from stt import logger
+import logging
 
 celery = Celery(__name__, include=['celery_app.tasks'])
 service_name = os.environ.get("SERVICE_NAME")
@@ -23,4 +22,4 @@ celery.conf.update(
     }
 )
 
-logger.info("Celery configured for broker located at {} with service name {}".format(broker_url, service_name))
+logging.info("Celery configured for broker located at {} with service name {}".format(broker_url, service_name))

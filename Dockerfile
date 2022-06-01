@@ -15,7 +15,8 @@ RUN apt-get update && \
 
 # Install python dependencies
 COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && \
+    python3 -m spacy download en_core_web_sm
 
 WORKDIR /usr/src/app
 

@@ -8,7 +8,7 @@ This repository is for building a Docker image for LinTO's NLP service: Keyword 
 The transcription service requires docker up and running.
 
 ### (micro-service) Service broker and shared folder
-The STT only entry point in job mode are tasks posted on a message broker. Supported message broker are RabbitMQ, Redis, Amazon SQS.
+The microservice only entry point in job mode are tasks posted on a message broker. Supported message broker are RabbitMQ, Redis, Amazon SQS.
 On addition, as to prevent large audio from transiting through the message broker, STT-Worker use a shared storage folder.
 
 ## Deploy linto-platform-nlp-keyword-extraction
@@ -80,8 +80,9 @@ Returns "1" if healthcheck passes.
 Keyword Extraction API
 
 * Method: POST
-* Response content: text/plain
+* Response content: application/json
 * Text: The text to process
+* Method: "frequency", "textrank", or "topicrank"
 
 
 #### /docs
@@ -89,14 +90,25 @@ The /docs route offers a OpenAPI/swagger-ui interface.
 
 ### Through the message broker
 
-STT-Worker accepts requests with the following arguments:
+Worker accepts requests with the following arguments:
 ```text: str, language: str```
 
 * <ins>text</ins>: Input text
-* <ins>language</ins>: Language
+* <ins>method</ins>: Algorithm to compute the Keywords
 
 #### Return format
-On a successfull transcription the returned object is a text.
+A JSON object containing the keywords as keys and their scores as values.
+
+
+## Test
+
+### Curl
+You can test you http API using curl:
+
+```
+curl -X POST "http://SERVICE:PORT/keyword_extraction" -H  "accept: text/plain" -H  "Content-Type: application/json" -d "{  \"text\": \"Your text here.\", \"method\": \"topicrank\" }"
+```
+
 
 ## License
 This project is developped under the AGPLv3 License (see LICENSE).

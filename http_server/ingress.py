@@ -11,7 +11,7 @@ from serving import GunicornServing
 from confparser import createParser
 from swagger import setupSwaggerUI
 
-from keyword_extraction.utils import get_word_frequencies
+from keyword_extraction.preprocessing.utils import get_word_frequencies, get_textrank_topwords, get_topicrank_topwords
 
 # IMPORT YOUR PROCESSING FUNCTION HERE
 
@@ -39,12 +39,20 @@ def extract_keywords():
         
     # Retrieve request text
     try:
-        input_text = request.form.get("text")
+        request_body = json.loads(request.data)
+        input_text = request_body.get("text", "")
+        method = request_body.get("method", "frequencies")
+        assert(method in ("frequencies", "textrank", "topicrank"))
     except Exception as e:
         return "Missing request parameter: {}".format(e)
 
     try:
-        result = get_word_frequencies(text)
+        if method == "frequencies":
+            result = get_word_frequencies(input_text)
+        elif method == "textrank":
+            result = get_textrank_topwords(input_text)
+        elif method == "topicrank":
+            result = get_topicrank_topwords(input_text)
     except Exception as e:
         return "Failed to process text: {}".format(e), 500
 
