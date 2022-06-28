@@ -18,7 +18,7 @@ celery.conf.update(
 # Queues
 celery.conf.update(
     {'task_routes': {
-        'keyword_extraction_task' : {'queue': "keyword_extraction"},}
+        'keyword_extraction' : {'queue': "keyword_extraction"},}
     }
 )
 

@@ -46,6 +46,7 @@ def extract_keywords():
     except Exception as e:
         return "Missing request parameter: {}".format(e)
 
+    result = {}
     try:
         if method == "frequencies":
             result = get_word_frequencies(input_text)
@@ -53,6 +54,8 @@ def extract_keywords():
             result = get_textrank_topwords(input_text)
         elif method == "topicrank":
             result = get_topicrank_topwords(input_text)
+        else:
+            raise Exception("Invalid method")
     except Exception as e:
         return "Failed to process text: {}".format(e), 500
 
