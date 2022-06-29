@@ -41,7 +41,8 @@ def extract_keywords():
     try:
         request_body = json.loads(request.data)
         input_text = request_body.get("text", "")
-        method = request_body.get("method", "frequencies")
+        parameters = request_body.get("parameters", {})
+        method = parameters.get("method", "")
         assert(method in ("frequencies", "textrank", "topicrank"))
     except Exception as e:
         return "Missing request parameter: {}".format(e)
@@ -49,11 +50,11 @@ def extract_keywords():
     result = {}
     try:
         if method == "frequencies":
-            result = get_word_frequencies(input_text)
+            result = get_word_frequencies(input_text, parameters)
         elif method == "textrank":
-            result = get_textrank_topwords(input_text)
+            result = get_textrank_topwords(input_text, parameters)
         elif method == "topicrank":
-            result = get_topicrank_topwords(input_text)
+            result = get_topicrank_topwords(input_text, parameters)
         else:
             raise Exception("Invalid method")
     except Exception as e:

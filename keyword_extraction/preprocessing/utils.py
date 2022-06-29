@@ -28,22 +28,27 @@ def preprocess(s):
     return words
     
     
-def get_word_frequencies(doc: str) -> Dict[str, int]:
+def get_word_frequencies(doc: str, parameters: dict) -> Dict[str, int]:
     words = preprocess(doc)
-    return dict([(w, c) for w, c in Counter(words).most_common() if c > 1])
+    threshold = parameters.get("threshold", 0)
+    return dict([(w, c) for w, c in Counter(words).most_common() if c > threshold])
 
-def get_textrank_topwords(text):
-    textranker = TextRank4Keyword()
+def get_textrank_topwords(text, parameters: dict):
+    damping, steps = parameters.get("damping", 0.85), parameters.get("steps", 10)
+    textranker = TextRank4Keyword(damping=damping, steps=steps)
     textranker.analyze(text, lower=True)
     return dict(textranker.get_keywords())
 
-def get_topicrank_topwords(text):
-    nlp = spacy.load("en_core_web_sm")
+def get_topicrank_topwords(text, parameters: dict):
+    spacy_model = parameters.get("spacy_model", "en_core_web_sm")
+    phrase_count_threshold = parameters.get("phrase_count_threshold", 0)
+    
+    nlp = spacy.load(spacy_model)
     nlp.add_pipe("topicrank", config={ "stopwords": { "word": ["NOUN"] } })
     doc = nlp(text)
 
     keywords = []
     for phrase in doc._.phrases:
-        if phrase.count > 1:
+        if phrase.count > phrase_count_threshold:
             keywords.append((phrase.text, phrase.rank))
     return dict((keywords))
