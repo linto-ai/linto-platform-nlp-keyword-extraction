@@ -82,7 +82,7 @@ Keyword Extraction API
 * Method: POST
 * Response content: application/json
 * Text: The text to process
-* Method: "frequency", "textrank", or "topicrank"
+* Method: "spacy", "bert"
 
 
 #### /docs
@@ -106,7 +106,7 @@ A JSON object containing the keywords as keys and their scores as values.
 You can test you http API using curl:
 
 ```
-curl -X POST "http://SERVICE:PORT/keyword_extraction" -H  "accept: text/plain" -H  "Content-Type: application/json" -d "{  \"text\": \"Your text here.\", \"method\": \"topicrank\" }"
+curl -X POST "http://SERVICE:PORT/keyword_extraction" -H  "accept: text/plain" -H  "Content-Type: application/json" -d "{  \"text\": \"Your text here.\", \"parameters\": {\"method\": \"spacy\"} }"
 ```
 
 
