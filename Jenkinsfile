@@ -1,9 +1,8 @@
 pipeline {
     agent any
     environment {
-        DOCKER_HUB_REPO = "lintoai/[TBR-REPOSITORY NAME]"
-        DOCKER_HUB_CRED = 'docker-hub-credentials'
-        
+        DOCKER_HUB_REPO = "saas/linto-platform-nlp-keyword-extraction"
+        DOCKER_HUB_CRED = 'harbor-jenkins-robot'
         VERSION = ''
     }
 
