@@ -1,82 +1,77 @@
 #!/usr/bin/env python3
 
-import os
-from time import time
-import logging
 import json
+import logging
 
-from flask import Flask, request, abort, Response, json
-
-from serving import GunicornServing
+import requests
+from celery_app.tasks import get_word_frequencies
 from confparser import createParser
+from flask import Flask, json, request
+from serving import GunicornServing
 from swagger import setupSwaggerUI
 
-from keyword_extraction.preprocessing.utils import get_word_frequencies, get_textrank_topwords, get_topicrank_topwords
+from keyword_extraction import logger
 
-# IMPORT YOUR PROCESSING FUNCTION HERE
+app = Flask("__keyword_extraction-worker__")
 
-app = Flask("__stt-standalone-worker__")
 
-logging.basicConfig(format='%(asctime)s %(name)s %(levelname)s: %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
-logger = logging.getLogger("__stt-standalone-worker__")
-
-@app.route('/healthcheck', methods=['GET'])
+@app.route("/healthcheck", methods=["GET"])
 def healthcheck():
     return json.dumps({"healthcheck": "OK"}), 200
 
-@app.route("/oas_docs", methods=['GET'])
+
+@app.route("/oas_docs", methods=["GET"])
 def oas_docs():
     return "Not Implemented", 501
 
-@app.route('/keyword_extraction', methods=['POST'])
-def extract_keywords():
-    logger.info('Keyword extraction request received')
 
-    # get response content type
-    logger.debug(request.headers.get('accept').lower())
-    if not request.headers.get('accept').lower() == 'text/plain':
-        return "Accept header must be set with text/plain", 400
-        
-    # Retrieve request text
+@app.route("/keyword_extraction", methods=["POST"])
+def keyword_extraction_route():
     try:
+        logger.debug("Keyword Extraction request received")
+        # Fetch data/parameters
+        logger.debug(request.headers.get('accept').lower())
         request_body = json.loads(request.data)
-        input_text = request_body.get("text", "")
-        parameters = request_body.get("parameters", {})
-        method = parameters.get("method", "")
+        documents = request_body.get("documents", "")
+        config = request_body.get("config", {})
+        method = config.get("method", "")
         assert(method in ("frequencies", "textrank", "topicrank"))
+
+        results = []
+
+        try:
+            if method == "frequencies":
+                results = get_word_frequencies(documents, config)
+        except Exception as e:
+            logger.debug(request_body);
+            return "Failed to process text: {}".format(e), 500
+
+        # Return result
+        return results, 200
+
     except Exception as e:
+        logger.debug(request.data)
         return "Missing request parameter: {}".format(e)
 
-    result = {}
-    try:
-        if method == "frequencies":
-            result = get_word_frequencies(input_text, parameters)
-        elif method == "textrank":
-            result = get_textrank_topwords(input_text, parameters)
-        elif method == "topicrank":
-            result = get_topicrank_topwords(input_text, parameters)
-        else:
-            raise Exception("Invalid method")
-    except Exception as e:
-        return "Failed to process text: {}".format(e), 500
-
-    return result, 200
 
 # Rejected request handlers
 @app.errorhandler(405)
-def method_not_allowed(error):
-    return 'The method is not allowed for the requested URL', 405
+def method_not_allowed(_):
+    return "The method is not allowed for the requested URL", 405
+
 
 @app.errorhandler(404)
-def page_not_found(error):
-    return 'The requested URL was not found', 404
+def page_not_found(_):
+    return "The requested URL was not found", 404
+
 
 @app.errorhandler(500)
 def server_error(error):
     logger.error(error)
-    return 'Server Error', 500
+    return "Server Error", 500
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     logger.info("Startup...")
 
     parser = createParser()
@@ -89,9 +84,14 @@ if __name__ == '__main__':
             logger.debug("Swagger UI set.")
     except Exception as e:
         logger.warning("Could not setup swagger: {}".format(str(e)))
-    
-    serving = GunicornServing(app, {'bind': '{}:{}'.format("0.0.0.0", args.service_port),
-                                    'workers': args.workers,})
+
+    serving = GunicornServing(
+        app,
+        {
+            "bind": f"0.0.0.0:{args.service_port}",
+            "workers": args.workers,
+        },
+    )
     logger.info(args)
     try:
         serving.run()

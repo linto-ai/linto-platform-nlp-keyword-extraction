@@ -1,0 +1,15 @@
+version: '3.7'
+
+services:
+  keyword_extraction:
+    build: .
+    # image: linto-platform-nlp-keyword-extraction
+    env_file: .env
+    deploy:
+      replicas: 1
+    networks:
+      - linto-net
+
+networks:
+  linto-net:
+    external: true

@@ -5,10 +5,11 @@ from collections import OrderedDict
 class TextRank4Keyword(object):
     """Class copied from https://towardsdatascience.com/textrank-for-keyword-extraction-by-python-c0bae21bcec0"""
     
-    def __init__(self, damping, steps):
+    def __init__(self, damping, steps, spacy_nlp):
         self.d = damping # damping coefficient, usually is .85
         self.min_diff = 1e-5 # convergence threshold
         self.steps = steps # iteration steps
+        self.spacy_nlp = spacy_nlp # preloaded SpaCy model
         self.node_weight = None # save keywords and its weight
     
     def set_stopwords(self, stopwords):  
@@ -95,7 +96,7 @@ class TextRank4Keyword(object):
         
         # Set stop words
         self.set_stopwords(stopwords)
-        nlp = spacy.load("en_core_web_sm")
+        nlp = self.spacy_nlp
 
         # Pare text by spaCy
         doc = nlp(text)
