@@ -28,6 +28,8 @@ def oas_docs():
 @app.route("/keyword_extraction", methods=["POST"])
 def keyword_extraction_route():
     try:
+        print("########### At /keyword_extraction ###########")
+        print("########### Header: " - str(request.headers.get('accept')))
         logger.debug("Keyword Extraction request received")
         # Fetch data/parameters
         logger.debug(request.headers.get('accept').lower())
@@ -43,16 +45,15 @@ def keyword_extraction_route():
             if method == "frequencies":
                 results = get_word_frequencies(documents, config)
         except Exception as e:
-            logger.debug(request_body);
+            print(request_body);
             return "Failed to process text: {}".format(e), 500
 
         # Return result
         return results, 200
 
     except Exception as e:
-        logger.debug(request.data)
+        print(request.data)
         return "Missing request parameter: {}".format(e)
-
 
 # Rejected request handlers
 @app.errorhandler(405)
