@@ -30,4 +30,5 @@ def keyword_extraction_task(self, documents: list, method: str, config: dict): #
     else:
         result = ["Method " + method + " can't be found"]
 
+    result = [dict(sorted(r.items(), key=lambda x: -x[1])) for r in result]
     return result
