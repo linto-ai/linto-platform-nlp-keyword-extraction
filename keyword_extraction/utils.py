@@ -8,12 +8,18 @@ from collections import Counter, OrderedDict
 from typing import Dict, Any
 from .TextRank4Keyword import TextRank4Keyword
 
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+from keybert import KeyBERT
+from spacy.tokens import Doc
+
 spacy_nlp = None
 
 def preprocess(s):
     lang = os.environ.get("LANGUAGE", "fr")
     
-    if lang == 'fr':
+    if lang.startswith('fr'):
         stop_words = ['allaient', 'ta', 'vers', 'eue', 'ceux', 'est', 'tu', 'étions', 'multiples', 'sept', 
                       'retour', 'quelconque', 'abord', 'neuvième', 'huitième', 'ha', 'revoici', 'aurez', 'es', 'dernier', 
                       'tandis', 'ho', 'fussiez', 'septième', 'a', 's',
@@ -99,7 +105,20 @@ def preprocess(s):
     s = s.translate(str.maketrans('', '', punctuation))
     words = [t for t in re.findall(r"(\w+)", s) if t not in stop_words and len(t) > 1]
     return words
+
+def get_data(doc: Doc) -> Dict[str, Any]:
+    """Extract the data to return from the REST API given a Doc object. Modify
+    this function to include other data."""
+    keyphrases = [
+        {
+            "text": keyphrase[0],
+            "score": keyphrase[1]
+        }
+        for keyphrase in doc._.keyphrases
+    ]
+    return {"text": doc.text, "keyphrases": keyphrases}
     
+
 def get_word_frequencies(doc, parameters) -> Dict[str, int]:
     words = preprocess(doc)
     threshold = parameters.get("threshold", 0)
@@ -114,10 +133,10 @@ def load_spacy(parameters):
         if "spacy_model" in parameters:
             spacy_model = parameters[spacy_model]
         else:
-            lang = os.environ.get("LANGUAGE", "fr")
-            if lang == 'en':
+            lang = os.environ.get("LANGUAGE", "fr").lower()
+            if lang.startswith('en'):
                 spacy_model = "en_core_web_sm"
-            else:
+            elif lang.startswith('fr'):
                 spacy_model = "fr_core_news_sm"
         spacy_nlp = spacy.load(spacy_model)
     return spacy_nlp
@@ -153,3 +172,34 @@ def get_topicrank_topwords(doc, parameters) -> Dict[str, int]:
         if phrase.count > phrase_count_threshold and len(phrase.text) > 1:
             keywords.append((phrase.text, phrase.rank))
     return dict((keywords))
+
+
+def get_keybert_keywords_2(doc, parameters) -> Dict[str, int]:
+    print('KPE task received')
+
+    # Check language availability
+    model_name = 'paraphrase-multilingual-MiniLM-L12-v2'
+    lang = os.environ.get("LANGUAGE", "fr").lower()
+    if lang.startswith('en'):
+        model_name = "all-MiniLM-L6-v2"
+    elif lang.startswith('fr'):
+        model_name = "paraphrase-multilingual-MiniLM-L12-v2"
+    else:
+        raise RuntimeError(f"{lang} is not yet loaded.")
+    nlp = spacy.blank(lang)
+    nlp.add_pipe("kpe", config={"model": {"@misc": "get_model", "name": model_name}})
+
+    keywords = nlp.pipe(doc, component_cfg=parameters)
+
+    return keywords
+
+
+def get_keybert_keywords(doc, parameters) -> Dict[str, int]:
+    model_name = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    if 'model' in parameters:
+        model_name = parameters['model_name']
+        del parameters['model_name']
+    kw_model = KeyBERT(model_name)
+    keywords = kw_model.extract_keywords(doc, **parameters)
+
+    return {k:s for k,s in keywords}

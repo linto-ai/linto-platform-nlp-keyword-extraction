@@ -30,7 +30,7 @@ def keyword_extraction_route():
     try:
         print("########### At /keyword_extraction ###########")
         print("########### Header: " - str(request.headers.get('accept')))
-        logger.debug("Keyword Extraction request received")
+        print("Keyword Extraction request received")
         # Fetch data/parameters
         logger.debug(request.headers.get('accept').lower())
         request_body = json.loads(request.data)

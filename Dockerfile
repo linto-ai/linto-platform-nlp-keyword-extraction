@@ -19,7 +19,6 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt && \
     python3 -m spacy download fr_core_news_sm
 
-
 # Modules
 COPY celery_app /usr/src/app/celery_app
 COPY http_server /usr/src/app/http_server

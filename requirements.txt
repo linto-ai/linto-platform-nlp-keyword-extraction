@@ -12,3 +12,5 @@ nltk>=3.7
 pytextrank>=3.2.3
 spacy>=3.3.0
 numpy>=1.22
+
+keybert>=0.7.0
