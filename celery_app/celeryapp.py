@@ -3,6 +3,7 @@ import os
 from celery import Celery
 
 from keyword_extraction import logger
+from keyword_extraction.frekeybert import get_stop_words, get_sbert_model, get_wikipedia_titles, get_spacy_model
 
 celery = Celery(__name__, include=["celery_app.tasks"])
 service_name = os.environ.get("SERVICE_NAME")
@@ -26,3 +27,15 @@ celery.conf.update(
 logger.info(
     f"Celery configured for broker located at {broker_url} with service name {service_name}"
 )
+
+# setup ?
+"""
+_ = get_stop_words(language)
+sbert = get_sbert_model(language)
+_ = get_wikipedia_titles(language)
+_ = get_spacy_model(language)
+
+print('Running S-BERT ..')
+emb = sbert.encode('hello')
+print('Done for "hello"!')
+"""

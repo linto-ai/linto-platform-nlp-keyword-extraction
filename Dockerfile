@@ -17,7 +17,9 @@ WORKDIR /usr/src/app
 # Python dependencies
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt && \
-    python3 -m spacy download fr_core_news_sm
+    python3 -m spacy download fr_core_news_md
+#    python3 -m spacy download fr_core_news_md && \
+#    python3 -m spacy download en_core_web_md
 
 # Modules
 COPY celery_app /usr/src/app/celery_app

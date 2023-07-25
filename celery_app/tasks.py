@@ -2,6 +2,7 @@ import json
 import re
 from typing import Union, Dict, Any
 from collections import Counter, OrderedDict
+from keyword_extraction.frekeybert import get_frekeybert_keywords
 
 from keyword_extraction.utils import get_keybert_keywords, get_word_frequencies, get_textrank_topwords, get_topicrank_topwords
 
@@ -17,7 +18,8 @@ def keyword_extraction_task(self, documents: list, method: str, config: dict): #
     methods_map = {"frequencies": get_word_frequencies,
                   "textrank": get_textrank_topwords,
                   "topicrank": get_topicrank_topwords,
-                  "keybert": get_keybert_keywords}
+                  "keybert": get_keybert_keywords,
+                  "frekeybert": get_frekeybert_keywords}
     print("Using " + method + "to extract keywords from " + str(documents))
 
     result = []
@@ -31,5 +33,5 @@ def keyword_extraction_task(self, documents: list, method: str, config: dict): #
     else:
         result = ["Method " + method + " can't be found"]
 
-    result = [dict(sorted(r.items(), key=lambda x: -x[1])) for r in result]
+    result = [OrderedDict(sorted(r.items(), key=lambda x: -x[1])) for r in result]
     return result
