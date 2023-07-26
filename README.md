@@ -208,10 +208,9 @@ A model combining frenquencies and KeyBERT:
 
 | Config parameter | Description | Default Value |
 | --- | --- | --- |
-| `top_n` | Final (maximum) number of keywords extracted | Unbounded |
+| `top_n` | Final (maximum) number of keywords extracted | "all" |
 | `number_of_segments` | Expected number of topical segments | 10 |
-| `top_candidates` | Number of final set of potential keywords to be sorted | [stopwords_fr](keyword_extraction/data/stopwords_fr) |
-| `add_stopwords` | List of words to be added to the default stopword list | [] |
+| `top_candidates` | Number of final set of potential keywords to be sorted | 20 |
 | `sbert_model` | SentenceBERT model name to use for embedding | `paraphrase-multilingual-MiniLM-L12-v2` |
 | `verbose` | Whether or not to print out the extraction progress | False |
 | `stopwords` | List of words to be used to filter out stopwords | [stopwords_fr](keyword_extraction/data/stopwords_fr) |
@@ -256,17 +255,17 @@ Paper: [IJCNLP'13](https://aclanthology.org/I13-1062/)
 
 
 #### Frequencies
-Simply compute
+Simply computes the words that appear with the highest frequency (with the possibility of omitting stopwords).
 
 | Config parameter | Description | Default Value |
 | --- | --- | --- |
 | `threshold` | Minimum number of occurences a word appears in the text to be included | 1 |
-| `stopwords` | List of words to be used to filter out stopwords | ['thing', 'stuff'] |
-| `add_stopwords` | List of words to be added to the default stopword list | ['wow', 'yes', 'non'] |
+| `stopwords` | List of words to be used to filter out stopwords | [stopwords_fr](keyword_extraction/data/stopwords_fr) |
+| `add_stopwords` | List of words to be added to the default stopword list | [] |
 
 ### Return format
 
 
 
 ## License
-This project is developped under the AGPLv3 License (see LICENSE).
+This project is developped under the AGPLv3 License (see [LICENSE](LICENSE)).

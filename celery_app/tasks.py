@@ -29,7 +29,7 @@ def keyword_extraction_task(self, documents: list, method: str, config: dict): #
             for doc in documents:
                 result.append(extract_keywords(doc, config)) 
         except Exception as e:
-            raise Exception("Can't extraction keywords at keyword_extraction_task: " + str(e) + "; config: " + str(config))
+            raise Exception("Can't extract keywords at keyword_extraction_task: " + str(e) + "; config: " + str(config))
     else:
         result = ["Method " + method + " can't be found"]
 

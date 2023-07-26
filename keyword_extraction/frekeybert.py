@@ -1,4 +1,6 @@
 import os
+import re
+
 import spacy
 from collections import Counter
 from sklearn.metrics.pairwise import cosine_similarity
@@ -17,7 +19,7 @@ def get_stop_words(lang='fr'):
     global stop_words
 
     if stop_words == None:
-        print('Loading stopwords..', end=' ')
+        print('Loading stopwords..')
         if lang.startswith('fr'):
             with open('/usr/src/app/keyword_extraction/data/stopwords_fr') as f:
                 stop_words = [w.strip() for w in f]
@@ -26,7 +28,6 @@ def get_stop_words(lang='fr'):
                 stop_words = [w.strip() for w in f]
         else:
             raise Exception('Language not supported')
-        print(' done!')
 
     return stop_words
 
@@ -35,14 +36,13 @@ def get_spacy_model(lang='fr'):
     global spacy_nlp
 
     if spacy_nlp == None:
-        print('Loading SpaCy..', end=' ')
+        print('Loading SpaCy..')
         if lang.lower().startswith('fr'):
             spacy_nlp = spacy.load('fr_core_news_md')
         elif lang.lower().startswith('en'):
             spacy_nlp = spacy.load('en_core_web_md')
         else:
             raise Exception('Language not supported')
-        print(' done!')
     
     
     return spacy_nlp
@@ -52,7 +52,7 @@ def get_sbert_model(lang='fr'):
     global sbert_model
 
     if sbert_model == None:
-        print('Loading SentenceBert..', end=' ')
+        print('Loading SentenceBert..')
         if lang.startswith('en'):
             model_name = "all-MiniLM-L6-v2"
         elif lang.startswith('fr'):
@@ -60,7 +60,6 @@ def get_sbert_model(lang='fr'):
         else:
             raise Exception('Language not supported')
         sbert_model = SentenceTransformer('all-MiniLM-L6-v2')
-        print(' done!')    
     
     return sbert_model
 
@@ -69,7 +68,7 @@ def get_wikipedia_titles(lang='fr'):
     global wikipedia_titles
 
     if wikipedia_titles == None:
-        print('Loading Wikipedia titles..', end=' ')
+        print('Loading Wikipedia titles..')
         wikipedia_titles = []
         
         if lang.startswith('fr'):
@@ -85,8 +84,6 @@ def get_wikipedia_titles(lang='fr'):
         else:
             raise Exception('Language not supported')
         
-        print(' done!')
-
     return set(wikipedia_titles)
 
 
@@ -103,7 +100,7 @@ def filter_tf_cadidates(words_counter, conv_pos_tags, stopwords, valid_wikipedia
             while kws[:2] in ['à '] or \
                   kws[:3] in ['le ', 'la ', 'un ', 'de ', 'du ', 'en ', 'au ', 'on ', 'ma ', 'ta ', 'sa '] or \
                   kws[:4] in ['les ', 'des ', 'une ', 'par ', 'pas ', 'mon ', 'ton ', 'son ', 'mes ', 'tes ', 'ses ', 'nos ', 'vos ', 'sur '] or \
-                  kws[:5] in ['leur ', 'sous '] or \
+                  kws[:5] in ['leur ', 'sous ', 'dans ', 'hors ', 'lors '] or \
                   kws[:6] in ['votre ', 'notre ', 'leurs ']:
                 kws = ' '.join(kws.split(' ')[1:])
             result.append((kws, score))
@@ -140,6 +137,7 @@ def extract_frekeybert_keywords(text, n_segs=10, nlp=spacy_nlp, sbert_model=sber
                             wikipedia_titles=wikipedia_titles, top_candidates=50, verbose=False):
     if(verbose):
         print('# Tokenization and POS extraction through SpaCy[fr_core_news_md]..')
+    text = re.sub(' +', ' ', text)
     doc = nlp(text.lower())
     pos_tags = {}
     for token in doc:
