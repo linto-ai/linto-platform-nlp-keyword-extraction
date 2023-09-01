@@ -91,6 +91,8 @@ def filter_tf_cadidates(words_counter, conv_pos_tags, stopwords, valid_wikipedia
     result = []
     for kws, score in words_counter:
         words = kws.split(' ')
+        words = [w for w in words if w != '']
+
         # starts_with_preposition
         # ends with preposition
         if (any([conv_pos_tags[w] == 'NOUN' for w in words]) or any([conv_pos_tags[w] == 'PROPN' for w in words])) and \
@@ -101,7 +103,8 @@ def filter_tf_cadidates(words_counter, conv_pos_tags, stopwords, valid_wikipedia
                   kws[:3] in ['le ', 'la ', 'un ', 'de ', 'du ', 'en ', 'au ', 'on ', 'ma ', 'ta ', 'sa '] or \
                   kws[:4] in ['les ', 'des ', 'une ', 'par ', 'pas ', 'mon ', 'ton ', 'son ', 'mes ', 'tes ', 'ses ', 'nos ', 'vos ', 'sur '] or \
                   kws[:5] in ['leur ', 'sous ', 'dans ', 'hors ', 'lors '] or \
-                  kws[:6] in ['votre ', 'notre ', 'leurs ']:
+                  kws[:6] in ['votre ', 'notre ', 'leurs ', 'salut '] or \
+                  kws[:8] in ['bonjour ', 'bonsoir ']:
                 kws = ' '.join(kws.split(' ')[1:])
             result.append((kws, score))
     return result
