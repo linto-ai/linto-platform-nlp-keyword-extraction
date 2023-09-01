@@ -93,7 +93,7 @@ def filter_tf_cadidates(words_counter, conv_pos_tags, stopwords, valid_wikipedia
         words = kws.split(' ')
         # starts_with_preposition
         # ends with preposition
-        if any([conv_pos_tags[w] == 'NOUN' or conv_pos_tags[w] == 'PROPN' for w in words]) and \
+        if (any([conv_pos_tags[w] == 'NOUN' for w in words]) or any([conv_pos_tags[w] == 'PROPN' for w in words])) and \
            any([w not in stopwords for w in words]) and \
            conv_pos_tags[words[0]] != 'VERB' and \
             kws in valid_wikipedia_articles:
@@ -137,7 +137,7 @@ def extract_frekeybert_keywords(text, n_segs=10, nlp=spacy_nlp, sbert_model=sber
                             wikipedia_titles=wikipedia_titles, top_candidates=50, verbose=False):
     if(verbose):
         print('# Tokenization and POS extraction through SpaCy[fr_core_news_md]..')
-    text = re.sub(' +', ' ', text)
+    text = re.sub(' +', ' ', text).strip()
     doc = nlp(text.lower())
     pos_tags = {}
     for token in doc:

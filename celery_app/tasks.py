@@ -20,6 +20,7 @@ def keyword_extraction_task(self, documents: list, method: str, config: dict): #
                   "topicrank": get_topicrank_topwords,
                   "keybert": get_keybert_keywords,
                   "frekeybert": get_frekeybert_keywords}
+
     print("Using " + method + "to extract keywords from " + str(documents))
 
     result = []
@@ -29,7 +30,7 @@ def keyword_extraction_task(self, documents: list, method: str, config: dict): #
             for doc in documents:
                 result.append(extract_keywords(doc, config)) 
         except Exception as e:
-            raise Exception("Can't extract keywords at keyword_extraction_task: " + str(e) + "; config: " + str(config))
+            raise Exception("Can't extract keywords at keyword_extraction_task: " + str(e) + "; config: " + str(config) + "; doc: " + str(documents))
     else:
         result = ["Method " + method + " can't be found"]
 
