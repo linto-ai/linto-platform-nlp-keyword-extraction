@@ -1,5 +1,6 @@
 import os
 import re
+import string
 
 import spacy
 from collections import Counter
@@ -87,31 +88,51 @@ def get_wikipedia_titles(lang='fr'):
     return set(wikipedia_titles)
 
 
+def frekeybert_preprocess(text):
+    punc = '''!()[]{};:"\,<>./?@#$%^&*_~'''
+    text = re.sub("[\(\[].*?[\)\]]", "", text)
+    text = text.translate(str.maketrans('', '', punc))
+    text = re.sub(' +', ' ', text.strip())
+    words = []
+    for w in text.split() or w.startswith("'"):
+        if w.startswith('-'):
+            w = w[1:]
+        if w.endswith('-') or w.endswith("'"):
+            w = w[:-1]
+        if len(w) > 1:
+            words.append(w)
+    text = ' '.join(words) # remove ' and -
+    return text
+
 def filter_tf_cadidates(words_counter, conv_pos_tags, stopwords, valid_wikipedia_articles):
+    to_remove = ["-", 'bonjour', "hello", 'bonsoir', "après-midi", "matin", "matins", "cas", "personne", "personnes", "gens", "accord",
+                "an", "ans", "soir", "soirs", "jour", "jours", "mois", "année", "années", "putain", "merde", "chier", "trou de cul",
+                "mademoiselle", "monsieur", "madame", "messieurs", "mesdames"]
+    prefixes = ['à', 'le', 'la', "l'", 'un', 'de', 'du', 'en', 'au', 'on', 'ma', 'ta', 'sa', 'ce', 'je', 'tu', 'il', 
+            'les', 'des', 'une', 'par', 'pas', 'mon', 'ton', 'son', 'mes', 'tes', 'ses', 'nos', 'ils', 
+            'cet', 'ces', 'vos', 'sur', 'aux', 'leur', 'sous', 'dans', 'hors', 'lors', 'votre', 'pour', 'cette', 
+            'elle', 'nous', 'vous', 'avec', 'chez', 'tout', 'toute', 'tous', 'toutes', 'selon', 'elles', 'cettes', 
+            'notre', 'leurs', 'après', 'salut', 'dès', 'pendant', 'et', 'comme', 'bout', 'plusieurs']
+
     result = []
     for kws, score in words_counter:
-        words = kws.split(' ')
-        words = [w for w in words if w != '']
+        if kws in to_remove:
+            continue
+        
+        words = [w for w in kws.split(' ') if len(w) > 1]
 
-        # starts_with_preposition
-        # ends with preposition
-        if (any([conv_pos_tags[w] == 'NOUN' for w in words]) or any([conv_pos_tags[w] == 'PROPN' for w in words])) and \
-           any([w not in stopwords for w in words]) and \
-           conv_pos_tags[words[0]] != 'VERB' and \
-            kws in valid_wikipedia_articles:
-            while kws[:2] in ['à '] or \
-                  kws[:3] in ['le ', 'la ', 'un ', 'de ', 'du ', 'en ', 'au ', 'on ', 'ma ', 'ta ', 'sa '] or \
-                  kws[:4] in ['les ', 'des ', 'une ', 'par ', 'pas ', 'mon ', 'ton ', 'son ', 'mes ', 'tes ', 'ses ', 'nos ', 'vos ', 'sur '] or \
-                  kws[:5] in ['leur ', 'sous ', 'dans ', 'hors ', 'lors '] or \
-                  kws[:6] in ['votre ', 'notre ', 'leurs ', 'salut '] or \
-                  kws[:8] in ['bonjour ', 'bonsoir ']:
+        if any(conv_pos_tags[w] in ['NOUN', 'PROPN'] for w in words) and \
+           not all(w in stopwords for w in words) and \
+           kws in valid_wikipedia_articles:
+            while kws.split(' ')[0] in prefixes:
                 kws = ' '.join(kws.split(' ')[1:])
-            result.append((kws, score))
+            if len(kws) > 1:
+                result.append((kws, score))
+
     return result
 
-
 def get_frekeybert_keywords(doc, config):
-    n_segs = config.get('number_of_segments', 10)
+    n_segs = config.get('number_of_segments', -1)
     top_candidates = config.get('top_candidates', 50)
     verbose = config.get('verbose', False)
     top_n = config.get('top_n', len(doc.split()))
@@ -135,32 +156,45 @@ def get_frekeybert_keywords(doc, config):
 
     return dict(keywords)
 
-def extract_frekeybert_keywords(text, n_segs=10, nlp=spacy_nlp, sbert_model=sbert_model, 
+def extract_frekeybert_keywords(text, n_segs=-1, nlp=spacy_nlp, sbert_model=sbert_model, 
                             stopwords = stop_words, top_n=20,
-                            wikipedia_titles=wikipedia_titles, top_candidates=50, verbose=False):
+                            wikipedia_titles=wikipedia_titles, top_candidates=50, verbose=False,
+                            scoring="sim"):
     if(verbose):
         print('# Tokenization and POS extraction through SpaCy[fr_core_news_md]..')
-    text = re.sub(' +', ' ', text).strip()
+    
+    text = frekeybert_preprocess(text)
     doc = nlp(text.lower())
     pos_tags = {}
+    
+    if n_segs < 0:
+        n_segs = max(1, int(len(doc) / 200))
+    
     for token in doc:
         if token.text not in pos_tags:
             pos_tags[token.text] = []
         pos_tags[token.text].append(token.pos_)
+    
+    # print("pos_tags", pos_tags)
+    
     for word in pos_tags:
         pos_tags[word] = Counter(pos_tags[word]).most_common()[0][0]
-        
     if(verbose):
         print('# Extract word an d n-gram counts..')
+    
     tf_keywords = []
     counter = CountVectorizer(ngram_range=(1, 3), lowercase= True, stop_words=[], tokenizer=lambda s: s.split(' '))
     X = counter.fit_transform([' '.join(tok.text for tok in doc)])
     for x in X.toarray():
         tf_keywords = sorted([(w, s) for s, w in zip(x, counter.get_feature_names_out())], key=lambda x: -x[1])    
-        
+    
+    # print("tf_keywords", tf_keywords)
+    
     if(verbose):
         print('# Filter out non-valid keywords (no nouns, all stopwords, valid Wikipedia title, remove particles from beginning)')
     kept_keywords = filter_tf_cadidates(tf_keywords, pos_tags, stopwords, wikipedia_titles)
+    
+    # print("kept_keywords", kept_keywords)
 
     if(verbose):
         print('# Fuse smaller keywords into the longest frequent one')
@@ -188,6 +222,8 @@ def extract_frekeybert_keywords(text, n_segs=10, nlp=spacy_nlp, sbert_model=sber
 
     fused_keywords = sorted(fused_keywords.items(), key=lambda e: -e[1])
 
+    # print("fused_keywords", fused_keywords)
+    
     if(verbose):
         print('# Compute keywords embeddings..')
     sbert_embeddings = {}
@@ -211,7 +247,12 @@ def extract_frekeybert_keywords(text, n_segs=10, nlp=spacy_nlp, sbert_model=sber
 
         scored_by_doc_i = {}
         for w, s in fused_keywords:
-            scored_by_doc_i[w] = float(cosine_similarity(doc_i_emb, sbert_embeddings[w])[0][0])
+            if scoring == "sim":
+                scored_by_doc_i[w] = float(cosine_similarity(doc_i_emb, sbert_embeddings[w])[0][0])
+            elif scoring == "freq*sim":
+                scored_by_doc_i[w] = s * float(cosine_similarity(doc_i_emb, sbert_embeddings[w])[0][0])
+            elif scoring == "logfreq*sim":
+                scored_by_doc_i[w] = np.log2(s+1) * float(cosine_similarity(doc_i_emb, sbert_embeddings[w])[0][0])
 
         for w, s in scored_by_doc_i.items():
             doc_keywords[w] = s if w not in doc_keywords else max(doc_keywords[w], s)
@@ -219,6 +260,9 @@ def extract_frekeybert_keywords(text, n_segs=10, nlp=spacy_nlp, sbert_model=sber
     if(verbose):
         print('# Removing redundant keywords (plurals, synonym..) via embedding similarity')
     top_keywords = sorted(doc_keywords.items(), key=lambda x: -x[1])[:top_candidates]
+    
+    # print("top_keywords", top_keywords)
+    
     skip = set()
 
     for i, (w1, s1) in enumerate(top_keywords):
