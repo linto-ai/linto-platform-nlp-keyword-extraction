@@ -12,8 +12,8 @@ from celery_app.celeryapp import celery
 def keyword_extraction_task(self, documents: list, method: str, config: dict): # Task parameters
     """keyword_extraction_task"""
     self.update_state(state="STARTED")
-    print("Using " + method + "to extract keywords from " + str(documents))
-    print("With config " + str(config))
+    # print("Using " + method + "to extract keywords from " + str(documents))
+    # print("With config " + str(config))
 
     methods_map = {"frequencies": get_word_frequencies,
                   "textrank": get_textrank_topwords,
@@ -21,7 +21,7 @@ def keyword_extraction_task(self, documents: list, method: str, config: dict): #
                   "keybert": get_keybert_keywords,
                   "frekeybert": get_frekeybert_keywords}
 
-    print("Using " + method + "to extract keywords from " + str(documents))
+    # print("Using " + method + "to extract keywords from " + str(documents))
 
     result = []
     if method in methods_map:
