@@ -1,24 +1,38 @@
-import os
-import requests
 import json
+import re
+from typing import Union, Dict, Any
+from collections import Counter, OrderedDict
+from keyword_extraction.frekeybert import get_frekeybert_keywords
+
+from keyword_extraction.utils import get_keybert_keywords, get_word_frequencies, get_textrank_topwords, get_topicrank_topwords
+
 from celery_app.celeryapp import celery
 
-from keyword_extraction.preprocessing.utils import get_word_frequencies, get_textrank_topwords, get_topicrank_topwords
+@celery.task(name="keyword_extraction_task", bind=True) # Task name definition
+def keyword_extraction_task(self, documents: list, method: str, config: dict): # Task parameters
+    """keyword_extraction_task"""
+    self.update_state(state="STARTED")
+    # print("Using " + method + "to extract keywords from " + str(documents))
+    # print("With config " + str(config))
 
-service_name = os.environ.get("SERVICE_NAME")
+    methods_map = {"frequencies": get_word_frequencies,
+                  "textrank": get_textrank_topwords,
+                  "topicrank": get_topicrank_topwords,
+                  "keybert": get_keybert_keywords,
+                  "frekeybert": get_frekeybert_keywords}
 
-@celery.task(name=service_name)
-def keyword_extraction(text: str, parameters: dict):
-    """ return keywords and their weights """
-    result = {}
-    method = parameters["method"]
+    # print("Using " + method + "to extract keywords from " + str(documents))
 
-    if method == "frequencies":
-        result = get_word_frequencies(text, parameters)
-    elif method == "textrank":
-        result = get_textrank_topwords(text, parameters)
-    elif method == "topicrank":
-        result = get_topicrank_topwords(text, parameters)
+    result = []
+    if method in methods_map:
+        try:
+            extract_keywords = methods_map[method.lower()]
+            for doc in documents:
+                result.append(extract_keywords(doc, config)) 
+        except Exception as e:
+            raise Exception("Can't extract keywords at keyword_extraction_task: " + str(e) + "; config: " + str(config) + "; doc: " + str(documents))
     else:
-        raise Exception("Invalid method") 
+        result = ["Method " + method + " can't be found"]
+
+    result = [OrderedDict(sorted(r.items(), key=lambda x: -x[1])) for r in result]
     return result
